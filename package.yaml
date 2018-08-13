@@ -26,7 +26,6 @@ dependencies:
 - http-conduit
 - conduit
 - stm
-- fast-logger
 - transformers
 - exceptions
 - temporary
@@ -35,19 +34,21 @@ dependencies:
 - either
 - filepath
 - directory
-- global-lock
 - clock
 - brick
 - vty
 - vector
+- text-zipper
 - microlens
-- microlens-th
+- directory
+- text
+- http-types
 
 library:
   source-dirs: src
 
 executables:
-  haskell-download-manager-exe:
+  hdm:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
