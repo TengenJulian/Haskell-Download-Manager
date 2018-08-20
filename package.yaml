@@ -43,6 +43,7 @@ dependencies:
 - directory
 - text
 - http-types
+- fast-logger
 
 library:
   source-dirs: src

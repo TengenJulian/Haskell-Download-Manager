@@ -28,6 +28,7 @@ import qualified System.Clock as CL
 import           System.IO (withFile, hClose, hFlush, hSeek, SeekMode (..), IOMode (..), Handle)
 
 import Lib.Thread
+import Lib.Thread.Log
 import Lib.Log
 import Lib.UserAgent
 import Lib.Download
@@ -156,6 +157,8 @@ startDownloadFromResources t manager baseReq cl ranges tmpFiles dl = do
 
         newTime <- CL.getTime CL.Monotonic
 
+        logInfoThread t (show bytesDownloaded)
+
         case status of
           Right Stopping            -> do
             forM_ threads stopThread
@@ -188,7 +191,7 @@ startDownloadFromResources t manager baseReq cl ranges tmpFiles dl = do
               loop newDm
 
               else do
-              info "Worker thread failed"
+              logErrorThread t "Worker thread failed"
               forM_ threads stopThread
 
               setThreadError t (head errors)
@@ -213,17 +216,17 @@ testSlave = withFile "/tmp/test-file" WriteMode $ \h -> do
   clO <- getContentLength manager downloadLink
 
   case clO of
-    Nothing -> info "Could not get content Length"
+    Nothing -> logInfo "Could not get content Length"
     Just cl -> do
       byteCount <- newTVarIO 0
-      info ("Content-length: " ++ show cl)
+      logInfo ("Content-length: " ++ show cl)
 
       t <- startDownloadWorker h manager downloadLink byteCount cl
 
       _ <- waitThread t
       downloaded <- readTVarIO byteCount
 
-      info ("Downloaded: " ++ show downloaded ++ " bytes")
+      logInfo ("Downloaded: " ++ show downloaded ++ " bytes")
       return ()
 
 getContentLength :: Manager -> Request -> IO (Maybe Int)

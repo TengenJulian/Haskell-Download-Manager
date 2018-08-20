@@ -21,9 +21,10 @@ import           System.Directory (removeFile, getHomeDirectory)
 import           System.FilePath ((</>))
 import           System.Exit (die)
 
-import Lib.Tui (app, TuiEvent (..), initState, TuiState (..), downloadRemoveQueueL)
-import Lib.Thread
 import Lib.Download
+import Lib.Log
+import Lib.Thread
+import Lib.Tui (app, TuiEvent (..), initState, TuiState (..), downloadRemoveQueueL)
 import Lib.Util
 
 oneMB :: Num a => a

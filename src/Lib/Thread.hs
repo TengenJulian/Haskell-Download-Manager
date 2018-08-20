@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleInstances #-}
 module Lib.Thread
   ( runThread
   , getThreadStatus
@@ -24,42 +23,9 @@ import           Control.Exception (try, fromException, SomeException)
 
 import           Data.Maybe (fromJust)
 
-import Lib.Log
 import Lib.DownloadError
-
-data ThreadRunningState = Starting | Running | Finished | Paused | Stopping | Stopped deriving (Show, Eq)
-
-instance Monoid ThreadRunningState where
-  mempty = Starting
-
-  mappend Starting x = x
-  mappend x Starting = x
-  mappend Running Paused = Paused
-  mappend Running Finished = Finished
-  mappend Running Stopping = Stopping
-  mappend Stopping Stopped = Stopped
-  mappend x _ = x
-
-type ThreadStatus = Either DownloadError ThreadRunningState
-
-instance Monoid (Either DownloadError ThreadRunningState) where
-  mempty = Right mempty
-
-  mappend (Left e) (Right _) = Left e
-  mappend _ (Left e) = Left e
-  mappend (Right l) (Right r) = Right (l `mappend` r)
-
-data Thread r = Thread
-  { threadStatus :: TVar ThreadStatus
-  , threadResult :: TMVar (Maybe r)
-  , threadId :: CC.ThreadId
-  }
-
-instance Eq (Thread r) where
-  (==) t1 t2 = threadId t1 == threadId t2
-
-instance Show (Thread r) where
-  show t = "Thread <" ++ show (threadId t) ++ ">"
+import Lib.Thread.Log
+import Lib.Thread.Types
 
 runThread :: (Thread r -> IO r) -> IO (Thread r)
 runThread action = do
@@ -79,7 +45,7 @@ runThread action = do
 
     case r of
       Left e -> do
-        info "thread action failed"
+        logInfoThread thread " thread action failed"
         let mDownloadError = fromException e :: Maybe DownloadError
 
         let endStatus = case mDownloadError of
