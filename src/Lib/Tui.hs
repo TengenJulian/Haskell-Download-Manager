@@ -87,8 +87,8 @@ mkMainDialog :: Maybe String -> Maybe (Int, [(String, Bool)]) -> [(String, E.Edi
 mkMainDialog title buttons = MainDialog dlg Nothing Nothing
   where dlg = D.dialog title buttons 60
 
-initState :: [Download] -> FilePath -> Manager -> TuiState
-initState dls downloadDir' m = TuiState list (mkMainDialog Nothing Nothing []) DownloadList downloadDir' 1 [] m 0
+initState :: [Download] -> FilePath -> Manager -> Int -> TuiState
+initState dls downloadDir' m numThreads' = TuiState list (mkMainDialog Nothing Nothing []) DownloadList downloadDir' numThreads' [] m 0
   where list = L.list DownloadList (V.fromList dls) 2
 
 dialogHasFocus :: TuiState -> Bool

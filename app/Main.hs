@@ -6,26 +6,35 @@ import qualified Brick.Widgets.List    as L
 
 import           Control.Concurrent (threadDelay)
 import           Control.Concurrent.STM.TVar (readTVarIO)
-import           Control.Monad (unless, forM_)
+import           Control.Monad (unless, forM_, when)
 import           Control.Monad.Catch (catch)
 
 import           Data.Vector (toList)
+import           Data.Semigroup ((<>))
 
 import qualified Graphics.Vty as V
 import           Graphics.Vty.Config (defaultConfig)
 
 import           Lens.Micro
 import           Network.HTTP.Conduit
+import           Options.Applicative
 
 import           System.Directory (removeFile, getHomeDirectory)
 import           System.FilePath ((</>))
 import           System.Exit (die)
+
 
 import Lib.Download
 import Lib.Log
 import Lib.Thread
 import Lib.Tui (app, TuiEvent (..), initState, TuiState (..), downloadRemoveQueueL)
 import Lib.Util
+
+data ArgOptions = ArgOptions
+  { argDstDir :: FilePath
+  , argNumThreads :: Int
+  , argEnableDebug :: Bool
+  } deriving (Show)
 
 oneMB :: Num a => a
 oneMB = 1024 * 1024
@@ -41,23 +50,56 @@ genUpdateEventTUI chan = runThread $ \t -> do
           loop
   loop
 
-main :: IO ()
-main = do
-  homeFolder  <- getHomeDirectory
+argOptions :: FilePath -> Parser ArgOptions
+argOptions defaultDir = ArgOptions
+  <$> strOption
+      (    long "dir"
+        <> help "Directory to save downloads"
+        <> metavar "DIR"
+        <> showDefault
+        <> value defaultDir )
+  <*> option auto
+      (    long "num-threads"
+        <> short 'n'
+        <> help "Number of threads per download"
+        <> metavar "NUM"
+        <> showDefault
+        <> value 1 )
+  <*> switch
+      (    long "enable-debug"
+        <> short 'd'
+        <> help "Whether to enable debugging" )
 
-  let dstDir = homeFolder </> "Downloads"
-  mErrMsg <- checkDir dstDir
+main = do
+  homeFolder <- getHomeDirectory
+
+  let defaultDir = homeFolder </> "Downloads"
+
+      opts = info (argOptions defaultDir <**> helper)
+        (    fullDesc
+          <> progDesc "Start the download manager"
+          <> header "hdm - Haskell download manager" )
+
+  args <- execParser opts
+  mainWithArgs args
+
+mainWithArgs :: ArgOptions -> IO ()
+mainWithArgs args = do
+  mErrMsg <- checkDir (argDstDir args)
 
   case mErrMsg of
-    Just e  -> die ("Invalid download direcotry.\n" ++ e ++ "\nExiting...")
+    Just e  -> die ("Invalid download directory.\n" ++ e ++ "\nExiting...")
     Nothing -> return ()
 
-  eventChan   <- B.newBChan 32
+  when (argEnableDebug args)
+    initLogger
+
+  eventChan <- B.newBChan 32
 
   m  <- newManager tlsManagerSettings
-  ut  <- genUpdateEventTUI eventChan
+  ut <- genUpdateEventTUI eventChan
   st <- customMain (V.mkVty defaultConfig)
-                   (Just eventChan) app (initState [] dstDir m)
+                   (Just eventChan) app (initState [] (argDstDir args) m (argNumThreads args))
 
   putStrLn "Exiting..."
   stopWaitThread ut
