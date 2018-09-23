@@ -1,10 +1,10 @@
 name:                haskell-download-manager
 version:             0.1.0.0
-github:              "githubuser/haskell-download-manager"
+github:              "TengenJulian/Haskell-Download-Manager"
 license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2018 Author name here"
+author:              "David Veenstra"
+maintainer:          "davidjulianveenstra@gmail.com"
+copyright:           "2018 David Veenstra"
 
 extra-source-files:
 - README.md
