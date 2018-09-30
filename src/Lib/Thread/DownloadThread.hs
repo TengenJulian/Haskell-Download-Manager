@@ -2,7 +2,7 @@
 
 module Lib.Thread.DownloadThread where
 
-import qualified Data.ByteString as S (hPut, length, ByteString)
+import qualified Data.ByteString as B (hPut, length, ByteString)
 import           Data.ByteString.UTF8 (fromString)
 import           Data.ByteString.Char8 (readInt)
 import           Data.Either.Combinators (maybeToRight, mapLeft)
@@ -138,7 +138,7 @@ calcRanges n minSize total = unfoldr aux total
                  | otherwise      = Just ((total - rest, total - rest + d - 1), rest - d)
 
 -- | Same as setRequestHeaders, but will not wipe out all previous set headers.
-setRequestHeaders' :: [(HeaderName, [S.ByteString])] -> Request -> Request
+setRequestHeaders' :: [(HeaderName, [B.ByteString])] -> Request -> Request
 setRequestHeaders' hs req = foldr (uncurry setRequestHeader) req hs
 
 startDownloadFromResources :: Thread () -> Manager -> Request -> Int -> [(Int, Int)] -> [(FilePath, Handle)] -> Download -> IO ()
@@ -275,10 +275,10 @@ startDownloadWorker h manager req bytesDownloaded bytes = runThread $ \t -> do
 
   runConduitRes conduit
 
-sinkHandleCountBytes :: MonadIO m => Handle -> ConduitT S.ByteString o m Int
+sinkHandleCountBytes :: MonadIO m => Handle -> ConduitT B.ByteString o m Int
 sinkHandleCountBytes h = loop 0
       where loop n = do
               r <- await
               case r of
-                Just c -> liftIO (S.hPut h c) >> loop (n + S.length c)
+                Just c -> liftIO (B.hPut h c) >> loop (n + B.length c)
                 Nothing -> return n
