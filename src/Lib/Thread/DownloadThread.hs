@@ -20,7 +20,8 @@ import           Control.Monad.Trans.Except
 import           Control.Monad.Catch (try, finally, MonadCatch, Exception)
 
 import           Network.HTTP.Conduit
-import           Network.HTTP.Simple (getResponseHeader, setRequestHeaders)
+import           Network.HTTP.Simple (getResponseHeader, setRequestHeader, setRequestHeaders)
+import           Network.HTTP.Types.Header (HeaderName)
 
 import           System.IO.Temp (openTempFile)
 import           System.Directory (removeFile)
@@ -61,15 +62,8 @@ testDownload :: String -> Int -> IO ()
 testDownload url numThreads = do
   manager <- newManager tlsManagerSettings
   dlInfo' <- newTVarIO mkDownloadInfo
-  let dl = Download {
-          dlUrl = url
-        , dlNumWorkThreads = numThreads
-        , dlDir = "/tmp"
-        , dlFileName = "file.data"
-        , dlInfo = dlInfo'
-        , dlCachedInfo = mkDownloadInfo
-        , dlCachedStatus = Right Starting
-        }
+  dl <- mkDownload url "/tmp" numThreads
+
   startTime <- CL.getTime CL.Monotonic
   t <- startDownload manager dl
 
@@ -100,7 +94,14 @@ startDownload manager dl = runThread threadAction >>= setDlThread
 
 getDownloadResources :: Manager -> Download -> ExceptT DownloadError IO (Request, Int, [(Int, Int)], [(FilePath, Handle)])
 getDownloadResources manager dl = do
-  baseReq <- liftAction HttpError $ parseUrlThrow (dlUrl dl)
+  u <- liftIO randomUserAgent
+  let headers =
+        [ ("Connection", "Keep-Alive")
+        , ("Accept", "*/*")
+        , ("User-Agent", u)
+        ]
+
+  baseReq <- liftAction HttpError $ setRequestHeaders headers <$> parseUrlThrow (dlUrl dl)
   clM     <- liftAction HttpError $ getContentLength manager baseReq
 
   when (isNothing clM) $
@@ -135,6 +136,10 @@ calcRanges n minSize total = unfoldr aux total
                  | d + n >= rest  = Just ((total - rest, total - 1), 0)
                  | otherwise      = Just ((total - rest, total - rest + d - 1), rest - d)
 
+-- | Same as setRequestHeaders, but will not wipe out all previous set headers.
+setRequestHeaders' :: [(HeaderName, [S.ByteString])] -> Request -> Request
+setRequestHeaders' hs req = foldr (uncurry setRequestHeader) req hs
+
 startDownloadFromResources :: Thread () -> Manager -> Request -> Int -> [(Int, Int)] -> [(FilePath, Handle)] -> Download -> IO ()
 startDownloadFromResources t manager baseReq cl ranges tmpFiles dl = do
   let (_, handles) = unzip tmpFiles
@@ -146,7 +151,7 @@ startDownloadFromResources t manager baseReq cl ranges tmpFiles dl = do
     userAgent <- randomUserAgent
 
     let range = fromString $ mconcat ["bytes=", show left, "-", show right]
-        req   = setRequestHeaders [("Range", range), ("User-Agent", userAgent)] baseReq
+        req   = setRequestHeaders' [("Range", [range]), ("User-Agent", [userAgent])] baseReq
         size  = right - left + 1
 
     startDownloadWorker handle manager req byteVar size
