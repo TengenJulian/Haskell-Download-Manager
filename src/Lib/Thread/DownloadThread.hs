@@ -108,9 +108,10 @@ getDownloadResources manager dl = do
     throwE NoContentLength
   let Just cl = clM
 
-  supported <- liftIO $ isHttpRangeSupported manager baseReq
-  unless supported $
-    throwE HttpRangeNotSupported
+  when (dlNumWorkThreads dl > 1) $ do
+    supported <- liftIO $ isHttpRangeSupported manager baseReq
+    unless supported $
+      throwE HttpRangeNotSupported
 
   let ranges = calcRanges (dlNumWorkThreads dl) 8192 cl
 
