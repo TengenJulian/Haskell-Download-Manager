@@ -15,6 +15,9 @@ import Util
 microSecPerSec :: Num a => a
 microSecPerSec = 1000000
 
+chunkTimeout :: Num a => a
+chunkTimeout = 5 * microSecPerSec
+
 seqTuple3 :: (a ,b, c) -> (a, b,c )
 seqTuple3 (a, b, c) = a `seq` b `seq` c `seq` (a, b, c)
 
@@ -77,16 +80,23 @@ downloadSpeed = snd . etaEq
 
 updateMeasurement :: DownloadMeasurement -> CL.TimeSpec -> Int -> Either MeasurementError DownloadMeasurement
 updateMeasurement dm newTime newBytesDownloaded
+  | dt > chunkTimeout = Right $ (emptyDownloadMeasurement newTime)
+    {
+      timeLastUpdate    = newTime
+      , bytesDownloaded = newBytesDownloaded
+    }
   | newBytesDownloaded == bytesDownloaded dm = Left NoUpdate
   | otherwise = Right $ dm
-                       { timeLastUpdate  = newTime
-                       , bytesDownloaded = newBytesDownloaded
-                       , etaEq           = if enoughSamples ss
-                                           then simpleLinRegression ss
-                                           else (0, 0)
-                       , samples         = ss
-                       }
+    { timeLastUpdate  = newTime
+    , bytesDownloaded = newBytesDownloaded
+    , etaEq           = if enoughSamples ss
+                        then simpleLinRegression ss
+                        else (0, 0)
+    , samples         = ss
+    }
   where ss = (toSecs newTime, fromIntegral newBytesDownloaded) : take (numSamples - 1) (samples dm)
+
+        dt = deltaTime newTime (timeLastUpdate dm)
 
         enoughSamples (_ : _ : _) = True
         enoughSamples _           = False

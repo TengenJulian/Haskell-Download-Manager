@@ -358,16 +358,25 @@ renderDl :: Double -> Bool -> Download -> Widget Name
 renderDl curTime _ dl = case (dlCachedStatus dl, dlSize info) of
   (Left e, _)         ->
     filename <=> (padRight Max . padLeft (Pad 2)) (renderDownloadError e)
+
   (Right Finished, Just cl) ->
-    (filename <+> padLeft (Pad 2) (byteInfo cl))
+    topBar cl
     <=> padLeft Max (progBar cl)
-  (Right Running, Just cl) ->
-    (filename <+> padLeft (Pad 2) (byteInfo cl))
+
+  (Right Running, Just cl) | dlSpeed info > 0 ->
+    topBar cl
     <=> (padLeft (Pad 2) (str "eta ") <+> eta cl <+> str " @ " <+> speed <+> padLeft Max (progBar cl))
+
+  (Right Running, Just cl) ->
+    topBar cl
+    <=> (padLeft (Pad 2) (str "eta Unkown") <+> str " @ " <+> speed <+> padLeft Max (progBar cl))
+
   _ ->
     filename <=> padLeft Max (str " ")
 
   where info = dlCachedInfo dl
+
+        topBar cl = filename <+> padLeft (Pad 2) (byteInfo cl)
 
         filename = whiteStr "* " <+> str (dlFileName dl)
         speed  = str (fmtBytes (dlSpeed info) ++ "/s")
@@ -381,6 +390,7 @@ renderDl curTime _ dl = case (dlCachedStatus dl, dlSize info) of
           where (b, m) = dlEta info
 
                 secs = if m == 0 then 0 else (fromIntegral cl - b) / m - curTime
+
 
 renderDownloadError :: DownloadError -> Widget Name
 renderDownloadError e = withAttr errorAttr (strWrap errMsg)
