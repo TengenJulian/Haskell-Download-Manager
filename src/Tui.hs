@@ -381,7 +381,11 @@ renderDl curTime _ dl = case (dlCachedStatus dl, dlSize info) of
         filename = whiteStr "* " <+> str (dlFileName dl)
         speed  = str (fmtBytes (dlSpeed info) ++ "/s")
 
-        progBar cl = progressBar $ fromIntegral (dlBytesDownloaded info) / fromIntegral cl
+        progBar cl
+          | cl == dlBytesDownloaded info = progressBar 1
+          | r > 0.99                     = progressBar 0.99
+          | otherwise                    = progressBar r
+          where r = fromIntegral (dlBytesDownloaded info) / fromIntegral cl
 
         byteInfo cl = str ("[" ++ fmtBytes (fromIntegral (dlBytesDownloaded info))
                                   ++ " / " ++ fmtBytes ( fromIntegral cl) ++ "]")
