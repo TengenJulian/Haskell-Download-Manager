@@ -11,7 +11,7 @@ import           Data.List (unfoldr)
 import           Data.Conduit
 import           Data.Conduit.Combinators (takeExactly, sourceHandle, sinkHandle)
 
-import           Control.Concurrent (threadDelay)
+import           Control.Concurrent (threadDelay, killThread)
 import           Control.Concurrent.STM (atomically)
 import           Control.Concurrent.STM.TVar
 import           Control.Monad.IO.Class
@@ -38,6 +38,9 @@ import qualified DownloadMeasurement as DM
 
 downloadLink :: Request
 downloadLink = "http://ipv4.download.thinkbroadband.com/5MB.zip"
+
+stopTimeout :: Num a => a
+stopTimeout = 30 * DM.microSecPerSec
 
 cleanUpFiles :: [(FilePath, Handle)] -> IO ()
 cleanUpFiles fs = forM_ fs $ \(filePath, handle) -> do
@@ -167,12 +170,26 @@ startDownloadFromResources t manager baseReq cl ranges tmpFiles dl = do
         case status of
           Right Stopping            -> do
             forM_ threads stopThread
+
+            let waitLoop = do
+                  newTime' <- CL.getTime CL.Monotonic
+                  allDone  <- and <$> mapM isThreadDone threads
+
+                  if allDone
+                    then return ()
+                    else if DM.deltaTime newTime newTime' > stopTimeout
+                         then forM_ threads (killThread . threadId)
+                         else waitLoop
+
+            waitLoop
             return False
+
           _ | bytesDownloaded == cl -> do
             atomically . modifyTVar' (dlInfo dl) $ \oldInfo ->
               oldInfo { dlBytesDownloaded = cl}
 
             return True
+
           _                         -> do
             ss <- forM threads getThreadStatus
             let errors = [e | Left e <- ss]
