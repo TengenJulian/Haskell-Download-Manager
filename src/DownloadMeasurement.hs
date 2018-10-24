@@ -1,4 +1,4 @@
-module Lib.DownloadMeasurement
+module DownloadMeasurement
   -- (
   --   updateMeasurement
   -- , DownloadMeasurement (..)
@@ -10,7 +10,7 @@ where
 import qualified System.Clock as CL
 import Data.Int (Int64)
 
-import Lib.Util
+import Util
 
 microSecPerSec :: Num a => a
 microSecPerSec = 1000000

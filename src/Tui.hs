@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, TemplateHaskell, RankNTypes #-}
 
-module Lib.Tui where
+module Tui where
 
 import           Numeric
 
@@ -41,11 +41,11 @@ import           Text.Read (readMaybe)
 
 import Lens.Micro
 
-import Lib.Download
-import Lib.DownloadError
-import Lib.Thread
-import Lib.Thread.DownloadThread
-import Lib.Util
+import Download
+import Downloader
+import DownloadError
+import Thread
+import Util
 
 data Name = DownloadList
           | QuitDialog

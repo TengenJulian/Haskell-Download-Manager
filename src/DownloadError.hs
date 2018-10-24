@@ -1,4 +1,4 @@
-module Lib.DownloadError
+module DownloadError
   (
     DownloadError (..)
   )

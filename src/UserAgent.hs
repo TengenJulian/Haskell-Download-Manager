@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Lib.UserAgent
+module UserAgent
   (
     randomUserAgent
   )

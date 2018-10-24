@@ -1,7 +1,7 @@
-module Lib.Thread.Log where
+module Thread.Log where
 
-import Lib.Log
-import Lib.Thread.Types
+import Log
+import Thread.Types
 
 logInfoThread :: Thread r -> String -> IO ()
 logInfoThread t = logInfo . prependThreadId t

@@ -1,4 +1,4 @@
-module Lib.Download where
+module Download where
 
 import Control.Concurrent.STM.TVar
 
@@ -10,7 +10,7 @@ import Network.HTTP.Conduit (parseRequest, Request (..))
 
 import System.FilePath
 
-import Lib.Thread
+import Thread
 
 data Download = Download
   { dlUrl :: String

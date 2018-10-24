@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Lib.Thread.DownloadThread where
+module Downloader where
 
 import qualified Data.ByteString as B (hPut, length, ByteString)
 import           Data.ByteString.UTF8 (fromString)
@@ -28,13 +28,13 @@ import           System.Directory (removeFile)
 import qualified System.Clock as CL
 import           System.IO (withFile, hClose, hFlush, hSeek, SeekMode (..), IOMode (..), Handle)
 
-import Lib.Thread
-import Lib.Thread.Log
-import Lib.Log
-import Lib.UserAgent
-import Lib.Download
-import Lib.DownloadError
-import qualified Lib.DownloadMeasurement as DM
+import Thread
+import Thread.Log
+import Log
+import UserAgent
+import Download
+import DownloadError
+import qualified DownloadMeasurement as DM
 
 downloadLink :: Request
 downloadLink = "http://ipv4.download.thinkbroadband.com/5MB.zip"
@@ -58,10 +58,9 @@ safeOpenTempFiles n filePath fileName = loop n []
 
                   return Nothing
 
-testDownload :: String -> Int -> IO ()
-testDownload url numThreads = do
+testDownload :: Int -> String -> IO ()
+testDownload numThreads url = do
   manager <- newManager tlsManagerSettings
-  dlInfo' <- newTVarIO mkDownloadInfo
   dl <- mkDownload url "/tmp" numThreads
 
   startTime <- CL.getTime CL.Monotonic

@@ -1,4 +1,4 @@
-module Lib.Log
+module Log
   ( initLogger
   , logInfo
   , logWarn

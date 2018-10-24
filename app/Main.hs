@@ -23,12 +23,11 @@ import           System.Directory (removeFile, getHomeDirectory)
 import           System.FilePath ((</>))
 import           System.Exit (die)
 
-
-import Lib.Download
-import Lib.Log
-import Lib.Thread
-import Lib.Tui (app, TuiEvent (..), initState, TuiState (..), downloadRemoveQueueL)
-import Lib.Util
+import Download
+import Log
+import Thread
+import Tui (app, TuiEvent (..), initState, TuiState (..), downloadRemoveQueueL)
+import Util
 
 data ArgOptions = ArgOptions
   { argDstDir :: FilePath

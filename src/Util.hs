@@ -1,4 +1,4 @@
-module Lib.Util where
+module Util where
 
 import System.IO (withFile, IOMode (..))
 import System.IO.Error

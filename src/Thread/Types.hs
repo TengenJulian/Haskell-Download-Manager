@@ -1,11 +1,11 @@
 {-# LANGUAGE FlexibleInstances #-}
-module Lib.Thread.Types where
+module Thread.Types where
 
 import           Control.Concurrent.STM.TVar
 import           Control.Concurrent.STM.TMVar
 import qualified Control.Concurrent as CC
 
-import Lib.DownloadError
+import DownloadError
 
 data ThreadRunningState = Starting | Running | Finished | Paused | Stopping | Stopped deriving (Show, Eq)
 

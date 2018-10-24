@@ -1,4 +1,4 @@
-module Lib.Thread
+module Thread
   ( runThread
   , getThreadStatus
   , setThreadError
@@ -23,9 +23,9 @@ import           Control.Exception (try, fromException, SomeException)
 
 import           Data.Maybe (fromJust)
 
-import Lib.DownloadError
-import Lib.Thread.Log
-import Lib.Thread.Types
+import DownloadError
+import Thread.Log
+import Thread.Types
 
 runThread :: (Thread r -> IO r) -> IO (Thread r)
 runThread action = do
